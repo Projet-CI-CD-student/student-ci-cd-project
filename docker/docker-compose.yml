@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: app-${COLOR:-blue}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    # Option 1 : On force la lecture du .env à la racine
+    env_file:
+      - ../.env
+    environment:
+      # Option 2 : Sécurité totale, on définit l'URL en dur si la variable est vide
+      - DATABASE_URL=${DATABASE_URL:-postgresql://admin:password@db:5432/conduit}
+      - JWT_SECRET=${JWT_SECRET:-mon_secret_de_test}
+      - NODE_ENV=production
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:14-alpine
+    container_name: database-realworld
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=conduit
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d conduit"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
