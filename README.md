@@ -10,6 +10,7 @@ Le flux complet suit les étapes suivantes :
 2. Déclenchement de **GitHub Actions** (Tests unitaires, Linting).
 3. Connexion au serveur de déploiement.
 4. Exécution du script de déploiement **Blue/Green**.
+<img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/edf253ad-feaa-42b7-a558-67f833d98b72" />
 
 
 
