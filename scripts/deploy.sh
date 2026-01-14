@@ -1,47 +1,35 @@
 #!/bin/bash
 
-# 1. Recuperation de la derniere version du code
-echo "Recuperation du code depuis GitHub..."
-git pull origin main
+# Configuration
+COLOR=${COLOR:-blue}
+PORT=${APP_PORT:-3000}
 
-# 2. Configuration des ports
-BLUE_PORT=3001
-GREEN_PORT=3002
+echo "Lancement du deploiement : Cible $COLOR sur port $PORT"
 
-# 3. Detection de la version active
-if [ "$(docker ps -q -f name=app-blue)" ]; then
-    TARGET="green"
-    TARGET_PORT=$GREEN_PORT
-    OLD="blue"
-else
-    TARGET="blue"
-    TARGET_PORT=$BLUE_PORT
-    OLD="green"
-fi
+# 1. Pull de la derniere image
+docker pull melvyn92/app:latest
 
-echo "Lancement du deploiement Blue/Green : Cible $TARGET sur port $TARGET_PORT"
+# 2. Demarrage du nouveau conteneur
+# On utilise bien 'docker compose' (espace) et le fichier 'docker-compose.yml' (tiret)
+docker compose -f docker/docker-compose.yml up -d --pull always $COLOR
 
-# 4. Export des variables pour Docker Compose
-export COLOR=$TARGET
-export APP_PORT=$TARGET_PORT
-
-# Utilisation de --build pour integrer les changements du git pull
-docker compose -f docker/docker-compose.yml up -d --build
-
-# 5. Verification de sante (Healthcheck)
-echo "Attente du demarrage de la version $TARGET (30s)..."
+# 3. Attente pour s'assurer que le service est pret
+echo "Attente du demarrage de la version $COLOR (30s)..."
 sleep 30
 
-if [ "$(docker ps -q -f name=app-$TARGET)" ]; then
-    echo "Version $TARGET en ligne sur le port $TARGET_PORT"
+# 4. Verification de sante (curl)
+if curl -s -I "http://localhost:$PORT/api/articles" | grep -qE "HTTP/1.[01] (200|401)"; then
+    echo "Succes : La version $COLOR repond correctement."
     
-    # 6. Switch et Arret de l'ancienne version
-    if [ "$(docker ps -q -f name=app-$OLD)" ]; then
-        echo "Arret de l'ancienne version $OLD..."
-        docker stop app-$OLD
-    fi
-    echo "Deploiement reussi !"
+    # 5. Application des migrations de base de donnees
+    echo "Application des migrations DB..."
+    docker compose -f docker/docker-compose.yml exec -T $COLOR npx prisma migrate deploy
+
+    echo "Deploiement termine avec succes ! (L'ancienne version n'a pas ete touchee)"
+    exit 0
 else
-    echo "Echec du deploiement de $TARGET. L'ancienne version $OLD reste active."
+    echo "Echec du deploiement de $COLOR."
+    # On arrete le conteneur qui vient d'echouer
+    docker compose -f docker/docker-compose.yml stop $COLOR
     exit 1
 fi
