@@ -4,11 +4,10 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "nx serve",
-    "build": "nx build",
-    "test": "nx test",
-    "migrate": "prisma migrate deploy",
-    "seed": "ts-node --transpile-only prisma/seed.ts"
+  "start": "nx serve",
+  "build": "nx build",
+  "test": "nx test",
+  "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"

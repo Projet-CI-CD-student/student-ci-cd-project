@@ -42,14 +42,21 @@ jobs:
         working-directory: app
         run: npm ci
 
-      - name: Prisma migrate
+      # --- Prisma migrations ---
+      - name: Generate Prisma client
         working-directory: app
-        run: npm run migrate
+        run: npx prisma generate
+
+      - name: Create database & run migrations
+        working-directory: app
+        run: |
+          npx prisma migrate dev --name init --skip-seed
 
       - name: Seed database
         working-directory: app
         run: npm run seed
 
+      # --- Lint + Tests ---
       - name: Lint
         working-directory: app
         run: npx eslint . --max-warnings=0
@@ -58,6 +65,7 @@ jobs:
         working-directory: app
         run: npm test
 
+      # --- Docker ---
       - name: Build Docker image
         run: |
           docker build \
