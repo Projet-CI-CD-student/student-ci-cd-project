@@ -48,19 +48,17 @@ jobs:
         working-directory: app
         run: npx eslint . --max-warnings=0
 
-      # ✅ Reset DB and apply migrations
-      - name: Reset Database
+      # ✅ Reset database before tests
+      - name: Reset database
         working-directory: app
-        run: |
-          npx prisma migrate reset --force --skip-seed
+        run: npx prisma migrate reset --force --skip-seed
 
-      # ✅ Seed data if your tests need predefined users
-      - name: Seed Database
+      # ✅ Seed test data
+      - name: Seed database
         working-directory: app
-        run: |
-          npx prisma db seed
+        run: npx prisma db seed
 
-      - name: Run Tests
+      - name: Run tests
         working-directory: app
         run: npm test
 
