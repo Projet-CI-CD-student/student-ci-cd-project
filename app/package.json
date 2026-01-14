@@ -3,11 +3,12 @@
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
+  "type": "module",
   "scripts": {
-  "start": "nx serve",
-  "build": "nx build",
-  "test": "nx test",
-  "seed": "ts-node --transpile-only prisma/seed.ts"
+    "start": "nx serve",
+    "build": "nx build",
+    "test": "nx test",
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
