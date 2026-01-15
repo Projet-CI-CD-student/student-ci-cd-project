@@ -1,40 +1,60 @@
-FROM node:18-bullseye
+import express from 'express';
+import cors from 'cors';
+import * as bodyParser from 'body-parser';
+import routes from './app/routes/routes';
+import HttpException from './app/models/http-exception.model';
 
-# Installation des outils système
-RUN apt-get update && apt-get install -y openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
+const app = express();
 
-WORKDIR /app
+/**
+ * App Configuration
+ */
 
-# 1. Copie des fichiers
-COPY app/ .
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-# 2. Nettoyage
-RUN rm -rf node_modules package-lock.json dist .nx
+// Sécurité pour l'import des routes (Fix Build Prod)
+app.use((routes as any).default ? (routes as any).default : routes);
 
-# 3. Installation
-RUN npm install
+// Serves images
+app.use(express.static(__dirname + '/assets'));
 
-# 4. Génération Prisma
-RUN npx prisma generate --schema=./prisma/schema.prisma
+app.get('/', (req: express.Request, res: express.Response) => {
+  res.json({ status: 'API is running on /api' });
+});
 
-# 5. Fichier Prisma Client factice
-RUN echo "import { PrismaClient } from '@prisma/client'; const prisma = new PrismaClient(); export default prisma;" > prisma/prisma-client.ts
+/* eslint-disable */
+app.use(
+  (
+    err: Error | HttpException,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ) => {
+    // @ts-ignore
+    if (err && err.name === 'UnauthorizedError') {
+      return res.status(401).json({
+        status: 'error',
+        message: 'missing authorization credentials',
+      });
+      // @ts-ignore
+    } else if (err && err.errorCode) {
+      // @ts-ignore
+      res.status(err.errorCode).json(err.message);
+    } else if (err) {
+      res.status(500).json(err.message);
+    }
+  },
+);
 
-# 6. Build
-RUN npx nx build api --skip-nx-cache
+/**
+ * Server activation
+ */
 
-# 7. Patch Prisma
-RUN mkdir -p dist/api/prisma && \
-    echo "const { PrismaClient } = require('@prisma/client'); \
-          const client = new PrismaClient(); \
-          module.exports = client; \
-          module.exports.default = client;" > dist/api/prisma/prisma-client.js
+const PORT = process.env.PORT || 3000;
 
-# 8. Env
-EXPOSE 3000
-ENV NODE_ENV=production
-ENV NX_DAEMON=false
-
-# 9. Démarrage (MODIFIÉ)
-# On lance d'abord les migrations pour créer les tables, PUIS on démarre le serveur.
-CMD sh -c "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/api/main.js"
+// --- FIX FINAL : On ajoute '0.0.0.0' pour que Docker puisse accéder au serveur ---
+app.listen(Number(PORT), '0.0.0.0', () => {
+  console.info(`server up on port ${PORT}`);
+});
