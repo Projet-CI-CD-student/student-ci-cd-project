@@ -1,8 +1,7 @@
 import prisma from '../../../../prisma/prisma-client';
 import { Tag } from './tag.model';
 
-// MODIFICATION ICI : On utilise "export const" au lieu de juste "const"
-export const getTags = async (id?: number): Promise<string[]> => {
+const getTags = async (id?: number): Promise<string[]> => {
   const queries = [];
   queries.push({ demo: true });
 
@@ -38,4 +37,4 @@ export const getTags = async (id?: number): Promise<string[]> => {
   return tags.map((tag: Tag) => tag.name);
 };
 
-// SUPPRESSION DE LA LIGNE : export default getTags;
+export default getTags;
