@@ -1,19 +1,13 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import auth from '../auth/auth';
+// CORRECTION IMPORT
+import { required as authRequired, optional as authOptional } from '../auth/auth';
 import { followUser, getProfile, unfollowUser } from './profile.service';
 
 const router = Router();
 
-/**
- * Get profile
- * @auth optional
- * @route {GET} /profiles/:username
- * @param username string
- * @returns profile
- */
 router.get(
   '/profiles/:username',
-  auth.optional,
+  authOptional,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const profile = await getProfile(req.params.username, req.auth?.user?.id);
@@ -24,16 +18,9 @@ router.get(
   },
 );
 
-/**
- * Follow user
- * @auth required
- * @route {POST} /profiles/:username/follow
- * @param username string
- * @returns profile
- */
 router.post(
   '/profiles/:username/follow',
-  auth.required,
+  authRequired,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const profile = await followUser(req.params?.username, req.auth?.user?.id);
@@ -44,16 +31,9 @@ router.post(
   },
 );
 
-/**
- * Unfollow user
- * @auth required
- * @route {DELETE} /profiles/:username/follow
- * @param username string
- * @returns profiles
- */
 router.delete(
   '/profiles/:username/follow',
-  auth.required,
+  authRequired,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const profile = await unfollowUser(req.params.username, req.auth?.user?.id);

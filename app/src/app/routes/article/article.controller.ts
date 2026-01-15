@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import auth from '../auth/auth';
+// CORRECTION IMPORT
+import { required as authRequired, optional as authOptional } from '../auth/auth';
 import {
   addComment,
   createArticle,
@@ -16,18 +17,7 @@ import {
 
 const router = Router();
 
-/**
- * Get paginated articles
- * @auth optional
- * @route {GET} /articles
- * @queryparam offset number of articles dismissed from the first one
- * @queryparam limit number of articles returned
- * @queryparam tag
- * @queryparam author
- * @queryparam favorited
- * @returns articles: list of articles
- */
-router.get('/articles', auth.optional, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/articles', authOptional, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await getArticles(req.query, req.auth?.user?.id);
     res.json(result);
@@ -36,15 +26,9 @@ router.get('/articles', auth.optional, async (req: Request, res: Response, next:
   }
 });
 
-/**
- * Get paginated feed articles
- * @auth required
- * @route {GET} /articles/feed
- * @returns articles list of articles
- */
 router.get(
   '/articles/feed',
-  auth.required,
+  authRequired, // CORRECTION
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = await getFeed(
@@ -59,16 +43,7 @@ router.get(
   },
 );
 
-/**
- * Create article
- * @route {POST} /articles
- * @bodyparam  title
- * @bodyparam  description
- * @bodyparam  body
- * @bodyparam  tagList list of tags
- * @returns article created article
- */
-router.post('/articles', auth.required, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/articles', authRequired, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const article = await createArticle(req.body.article, req.auth?.user?.id);
     res.status(201).json({ article });
@@ -77,16 +52,9 @@ router.post('/articles', auth.required, async (req: Request, res: Response, next
   }
 });
 
-/**
- * Get unique article
- * @auth optional
- * @route {GET} /article/:slug
- * @param slug slug of the article (based on the title)
- * @returns article
- */
 router.get(
   '/articles/:slug',
-  auth.optional,
+  authOptional,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const article = await getArticle(req.params.slug, req.auth?.user?.id);
@@ -97,19 +65,9 @@ router.get(
   },
 );
 
-/**
- * Update article
- * @auth required
- * @route {PUT} /articles/:slug
- * @param slug slug of the article (based on the title)
- * @bodyparam title new title
- * @bodyparam description new description
- * @bodyparam body new content
- * @returns article updated article
- */
 router.put(
   '/articles/:slug',
-  auth.required,
+  authRequired,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const article = await updateArticle(req.body.article, req.params.slug, req.auth?.user?.id);
@@ -120,15 +78,9 @@ router.put(
   },
 );
 
-/**
- * Delete article
- * @auth required
- * @route {DELETE} /article/:id
- * @param slug slug of the article
- */
 router.delete(
   '/articles/:slug',
-  auth.required,
+  authRequired,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       await deleteArticle(req.params.slug, req.auth?.user!.id);
@@ -139,16 +91,9 @@ router.delete(
   },
 );
 
-/**
- * Get comments from an article
- * @auth optional
- * @route {GET} /articles/:slug/comments
- * @param slug slug of the article (based on the title)
- * @returns comments list of comments
- */
 router.get(
   '/articles/:slug/comments',
-  auth.optional,
+  authOptional,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const comments = await getCommentsByArticle(req.params.slug, req.auth?.user?.id);
@@ -159,17 +104,9 @@ router.get(
   },
 );
 
-/**
- * Add comment to article
- * @auth required
- * @route {POST} /articles/:slug/comments
- * @param slug slug of the article (based on the title)
- * @bodyparam body content of the comment
- * @returns comment created comment
- */
 router.post(
   '/articles/:slug/comments',
-  auth.required,
+  authRequired,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const comment = await addComment(req.body.comment.body, req.params.slug, req.auth?.user?.id);
@@ -180,16 +117,9 @@ router.post(
   },
 );
 
-/**
- * Delete comment
- * @auth required
- * @route {DELETE} /articles/:slug/comments/:id
- * @param slug slug of the article (based on the title)
- * @param id id of the comment
- */
 router.delete(
   '/articles/:slug/comments/:id',
-  auth.required,
+  authRequired,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       await deleteComment(Number(req.params.id), req.auth?.user?.id);
@@ -200,16 +130,9 @@ router.delete(
   },
 );
 
-/**
- * Favorite article
- * @auth required
- * @route {POST} /articles/:slug/favorite
- * @param slug slug of the article (based on the title)
- * @returns article favorited article
- */
 router.post(
   '/articles/:slug/favorite',
-  auth.required,
+  authRequired,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const article = await favoriteArticle(req.params.slug, req.auth?.user?.id);
@@ -220,16 +143,9 @@ router.post(
   },
 );
 
-/**
- * Unfavorite article
- * @auth required
- * @route {DELETE} /articles/:slug/favorite
- * @param slug slug of the article (based on the title)
- * @returns article unfavorited article
- */
 router.delete(
   '/articles/:slug/favorite',
-  auth.required,
+  authRequired,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const article = await unfavoriteArticle(req.params.slug, req.auth?.user?.id);
