@@ -6,22 +6,20 @@ WORKDIR /app
 
 COPY app/ .
 
-# Nettoyage
+# 1. Nettoyage radical (On supprime aussi le cache NX local s'il a été copié)
 RUN rm -rf node_modules package-lock.json dist .nx
 
-# Install
 RUN npm install
 
-# Prisma Generate
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
-# Patch compilation TypeScript
+# Patch TS
 RUN echo "import { PrismaClient } from '@prisma/client'; const prisma = new PrismaClient(); export default prisma;" > prisma/prisma-client.ts
 
-# Build (CRUCIAL)
-RUN npx nx build api --skip-nx-cache
+# 2. BUILD FORCÉ (Ajout de --skip-nx-cache ET reset avant)
+RUN npx nx reset && npx nx build api --skip-nx-cache
 
-# Patch exécution Production
+# Patch JS
 RUN mkdir -p dist/api/prisma && \
     echo "const { PrismaClient } = require('@prisma/client'); \
           const client = new PrismaClient(); \
@@ -32,5 +30,5 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV NX_DAEMON=false
 
-# Démarrage : Migration DB + Serveur Node
+# Démarrage
 CMD sh -c "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/api/main.js"

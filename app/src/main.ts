@@ -10,7 +10,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// SÉCURITÉ IMPORT (Indispensable pour le build prod)
+// Fix Build Prod
 app.use((routes as any).default ? (routes as any).default : routes);
 
 app.use(express.static(__dirname + '/assets'));
@@ -45,10 +45,8 @@ app.use(
 
 const PORT = process.env.PORT || 3000;
 
-// =========================================================
-// C'EST ICI QUE TOUT SE JOUE.
-// "0.0.0.0" EST OBLIGATOIRE POUR QUE LE TEST DEPLOIEMENT PASSE
-// =========================================================
+// --- ECOUTE PUBLIQUE (0.0.0.0) ---
 app.listen(Number(PORT), '0.0.0.0', () => {
-  console.info(`server up on port ${PORT}`);
+  // J'ai changé le message pour prouver que c'est la nouvelle version
+  console.info(`🚀 SERVER LISTENING ON 0.0.0.0:${PORT}`);
 });
