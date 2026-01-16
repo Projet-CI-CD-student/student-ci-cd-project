@@ -13,10 +13,37 @@ Le flux complet suit les étapes suivantes :
 <img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/edf253ad-feaa-42b7-a558-67f833d98b72" />
 
 
+## 2. Intégration Continue (CI) - Le Pipeline de Validation
 
+Le pipeline d'intégration est défini dans le fichier `.github/workflows/ci-cd.yml`. Il s'exécute automatiquement à chaque **push** ou **pull_request** sur la branche `main` pour garantir la qualité du code avant toute tentative de déploiement.
+
+### Environnement d'exécution
+* **Système :** `ubuntu-latest`
+* **Services tiers :** Base de données PostgreSQL éphémère (Service Container).
+
+
+
+### Les étapes rigoureuses du pipeline
+
+#### 1. Initialisation de l'environnement de test
+GitHub Actions lance un conteneur PostgreSQL temporaire (isolé de la production) pour permettre l'exécution des tests d'intégration sans risquer de corrompre les données réelles.
+
+#### 2. Validation du Code (Lint & Test)
+* **Installation :** Récupération des dépendances via `npm ci` (Clean Install) pour garantir des versions exactes.
+* **Génération Prisma :** Création du client ORM adapté à l'environnement CI.
+* **Tests Unitaires :** Exécution de la suite de tests (`npm test`). Si un seul test échoue, le pipeline s'arrête immédiatement (**"Fail Fast"**), empêchant le déploiement d'une version instable.
+
+#### 3. Construction de l'Artefact (Build Docker)
+* Une fois les tests validés, l'image Docker est construite.
+* Utilisation du **cache Docker** pour accélérer les builds suivants.
+* L'image est taguée avec le **SHA du commit** (pour la traçabilité) et le tag `latest`.
+
+#### 4. Distribution (Docker Hub)
+
+L'image validée est poussée vers le registre Docker Hub. C'est cette image immuable qui sera récupérée par le serveur de production lors de la phase de CD, garantissant une **parité parfaite** entre ce qui a été testé et ce qui est déployé.
 ---
 
-## 2. Choix de la Stratégie de Déploiement : Blue/Green
+## II 2. Choix de la Stratégie de Déploiement : Blue/Green
 Conformément aux exigences, nous avons implémenté une stratégie **Blue/Green**.
 
 * **Objectif** : Garantir un déploiement sans interruption de service (Zero-Downtime).
